@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Astraeus Natal Chart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090b14;
+      --bg2: #131827;
+      --panel: rgba(19, 24, 39, 0.78);
+      --line: rgba(255,255,255,0.1);
+      --gold: #d6b487;
+      --indigo: #7c86ff;
+      --mint: #67e8f9;
+      --text: #eef2ff;
+      --muted: #9aa4c0;
+      --danger: #ff7b7b;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: Pretendard, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(124,134,255,.14), transparent 28%),
+        radial-gradient(circle at 80% 20%, rgba(214,180,135,.10), transparent 24%),
+        linear-gradient(180deg, #080a12 0%, #0d1120 100%);
+      min-height: 100vh;
+    }
+
+    .stars::before, .stars::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,.7), transparent),
+        radial-gradient(1px 1px at 80px 120px, rgba(255,255,255,.55), transparent),
+        radial-gradient(1.5px 1.5px at 150px 70px, rgba(214,180,135,.55), transparent),
+        radial-gradient(1px 1px at 220px 160px, rgba(255,255,255,.45), transparent);
+      background-size: 260px 220px;
+      opacity: .35;
+    }
+    .stars::after { transform: scale(1.2); opacity: .18; }
+
+    .wrap {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 64px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      color: var(--gold);
+      font-size: 13px;
+      margin-bottom: 14px;
+      backdrop-filter: blur(8px);
+    }
+    h1 {
+      margin: 0;
+      font-family: "DM Serif Display", serif;
+      font-size: clamp(40px, 6vw, 72px);
+      line-height: 1.05;
+      letter-spacing: -.03em;
+      background: linear-gradient(180deg, #ffffff 0%, #d6b487 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      width: min(760px, 100%);
+      margin: 16px auto 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .input-panel {
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+
+    .field { grid-column: span 4; position: relative; }
+    .field.small { grid-column: span 2; }
+    .field.wide { grid-column: span 6; }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 15px;
+      outline: none;
+      transition: .2s ease;
+    }
+    input:focus {
+      border-color: rgba(124,134,255,.65);
+      box-shadow: 0 0 0 4px rgba(124,134,255,.14);
+    }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      border-radius: 16px;
+      padding: 14px 20px;
+      font-weight: 700;
+      font-size: 15px;
+      transition: .2s ease;
+    }
+    .primary {
+      background: linear-gradient(135deg, var(--gold), #f1d8b4);
+      color: #17120b;
+    }
+    .primary:hover { transform: translateY(-1px); }
+    .secondary {
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    .secondary:hover { background: rgba(255,255,255,.1); }
+
+    .help {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .status {
+      min-height: 22px;
+      color: var(--mint);
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .status.error { color: var(--danger); }
+
+    .city-results {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #121727;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 10;
+      box-shadow: var(--shadow);
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .city-item {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      cursor: pointer;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .city-item:last-child { border-bottom: 0; }
+    .city-item:hover { background: rgba(124,134,255,.12); }
+
+    .results {
+      display: none;
+      gap: 24px;
+      grid-template-columns: 1.05fr .95fr;
+      align-items: start;
+    }
+
+    .chart-panel { padding: 24px; }
+    .chart-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .pill {
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .chart-shell {
+      aspect-ratio: 1 / 1;
+      width: min(100%, 620px);
+      margin: 0 auto;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .side-panel {
+      display: grid;
+      gap: 16px;
+    }
+    .card {
+      padding: 18px;
+    }
+    .card h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .mini {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    .mini .k { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .mini .v { font-size: 18px; font-weight: 700; }
+    .mini .d { margin-top: 6px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+    .interpret-block {
+      padding: 14px 0;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .interpret-block:first-child { border-top: 0; padding-top: 0; }
+    .interpret-block h4 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      color: var(--gold);
+    }
+    .interpret-block p {
+      margin: 0;
+      color: var(--text);
+      opacity: .92;
+      line-height: 1.72;
+      font-size: 14px;
+    }
+
+    .house-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .house-item {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .house-item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    .house-item span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      display: block;
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 980px) {
+      .results { grid-template-columns: 1fr; }
+      .field, .field.small, .field.wide { grid-column: span 12; }
+    }
+    @media (max-width: 720px) {
+      .wrap { width: min(100% - 20px, 1200px); padding-top: 24px; }
+      .input-panel, .chart-panel, .card { padding: 16px; }
+      .result-grid, .house-list { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; align-items: stretch; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">✦ Western Astrology · Natal Chart Generator</div>
+      <h1>Astraeus</h1>
+      <p>
+        생년월일, 출생 시간, 출생 도시를 입력하면 태양궁, 달궁, 상승궁, 12하우스와 원형 차트를 한 화면에서 보여주는 정적 웹사이트야.
+        HTML/CSS/JavaScript만으로 동작해서 GitHub Pages에 바로 올릴 수 있어.
+      </p>
+    </section>
+
+    <section class="panel input-panel">
+      <div class="grid">
+        <div class="field">
+          <label for="birthDate">생년월일</label>
+          <input id="birthDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="birthTime">출생 시간</label>
+          <input id="birthTime" type="time" step="60" />
+        </div>
+        <div class="field wide">
+          <label for="birthCity">출생 도시</label>
+          <input id="birthCity" type="text" placeholder="예: Seoul, Busan, Tokyo, London" autocomplete="off" />
+          <div class="city-results" id="cityResults"></div>
+        </div>
+        <div class="field small">
+          <label for="timezoneOffset">UTC 오프셋</label>
+          <input id="timezoneOffset" type="number" step="0.5" placeholder="예: 9" />
+        </div>
+        <div class="field wide">
+          <label>선택된 위치</label>
+          <input id="selectedLocation" type="text" value="도시를 선택하면 위도/경도가 자동 반영돼." readonly />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="generateBtn">차트 생성하기</button>
+        <button class="secondary" id="fillSampleBtn">예시 값 넣기</button>
+      </div>
+      <div id="status" class="status"></div>
+      <div class="footer-note">
+        ※ 이 버전은 클라이언트 JS만으로 동작하는 교육용/시각화용 계산기야. 태양궁·달궁·상승궁·하우스는 근사 계산이며,
+        전문 에페머리스 소프트웨어와 수 분~수 도 정도 차이가 날 수 있어. GitHub Pages 배포용 정적 사이트라는 조건에 맞춰 백엔드 없이 구현했어.
+      </div>
+    </section>
+
+    <section class="results" id="results">
+      <div class="panel chart-panel">
+        <div class="chart-meta" id="chartMeta"></div>
+        <div class="chart-shell">
+          <canvas id="chartCanvas" width="840" height="840"></canvas>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="panel card">
+          <h3>핵심 결과</h3>
+          <div class="result-grid" id="summaryGrid"></div>
+        </div>
+
+        <div class="panel card">
+          <h3>해석</h3>
+          <div id="interpretationBlocks"></div>
+        </div>
+
+        <div class="panel card">
+          <h3>12하우스</h3>
+          <div class="house-list" id="houseList"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const SIGNS = [
+      { key: 'Aries', ko: '양자리', symbol: '♈', element: '불', mode: '카디널' },
+      { key: 'Taurus', ko: '황소자리', symbol: '♉', element: '흙', mode: '고정' },
+      { key: 'Gemini', ko: '쌍둥이자리', symbol: '♊', element: '바람', mode: '가변' },
+      { key: 'Cancer', ko: '게자리', symbol: '♋', element: '물', mode: '카디널' },
+      { key: 'Leo', ko: '사자자리', symbol: '♌', element: '불', mode: '고정' },
+      { key: 'Virgo', ko: '처녀자리', symbol: '♍', element: '흙', mode: '가변' },
+      { key: 'Libra', ko: '천칭자리', symbol: '♎', element: '바람', mode: '카디널' },
+      { key: 'Scorpio', ko: '전갈자리', symbol: '♏', element: '물', mode: '고정' },
+      { key: 'Sagittarius', ko: '사수자리', symbol: '♐', element: '불', mode: '가변' },
+      { key: 'Capricorn', ko: '염소자리', symbol: '♑', element: '흙', mode: '카디널' },
+      { key: 'Aquarius', ko: '물병자리', symbol: '♒', element: '바람', mode: '고정' },
+      { key: 'Pisces', ko: '물고기자리', symbol: '♓', element: '물', mode: '가변' }
+    ];
+
+    const signInterpretations = {
+      Aries: '즉각적으로 움직이고 먼저 시작하려는 에너지가 강해. 자기표현이 직선적이고 추진력이 빠른 편이야.',
+      Taurus: '안정감, 감각, 지속성을 중시해. 한 번 마음먹으면 오래 밀고 가는 힘이 있고 현실 감각이 좋아.',
+      Gemini: '호기심과 정보 수집력이 강하고, 언어·소통·멀티태스킹 능력이 잘 드러나. 생각의 전환이 빠른 편이야.',
+      Cancer: '감정의 결이 섬세하고 보호 본능이 강해. 익숙한 관계와 정서적 안전을 중요하게 여겨.',
+      Leo: '존재감과 창조성이 강하고, 스스로 빛나고 싶어 하는 성향이 있어. 표현력과 자존감이 핵심 주제야.',
+      Virgo: '정리, 분석, 개선 능력이 좋아. 작은 디테일까지 신경 쓰며 실용성과 정확성을 중시해.',
+      Libra: '관계의 균형, 미감, 조율 능력이 발달해. 타인과의 상호작용 속에서 정체성이 선명해지는 편이야.',
+      Scorpio: '깊이, 집중, 통찰이 강해. 표면보다 본질을 파고드는 성향이 있고 감정의 밀도가 높은 편이야.',
+      Sagittarius: '확장, 탐험, 의미 추구가 중요해. 넓은 세계관과 배움, 자유에 대한 욕구가 크지.',
+      Capricorn: '책임감과 목표 지향성이 강해. 시간과 성취를 중시하며 현실적인 성장 경로를 잘 설계해.',
+      Aquarius: '독립성, 실험성, 독창성이 드러나. 기존 방식보다 새로운 관점과 구조를 선호하는 편이야.',
+      Pisces: '감수성, 상상력, 공감 능력이 풍부해. 경계가 유연하고 분위기와 감정의 흐름을 잘 읽는 편이야.'
+    };
+
+    const houseThemes = [
+      '자아, 외형, 첫인상, 시작 방식',
+      '돈, 소유, 가치관, 자원',
+      '학습, 말하기, 형제자매, 가까운 환경',
+      '가정, 뿌리, 정서적 기반, 사적인 삶',
+      '창조성, 연애, 취미, 자기표현',
+      '일상, 건강, 루틴, 실무',
+      '파트너십, 계약, 1:1 관계',
+      '공유 자원, 심리 변화, 친밀성',
+      '철학, 여행, 고등 학습, 신념',
+      '커리어, 명성, 사회적 역할',
+      '친구, 네트워크, 미래 비전',
+      '무의식, 휴식, 회복, 숨은 영역'
+    ];
+
+    const sunRole = '태양궁은 의식적인 자아, 중심 동기, 삶을 이끌어 가는 기본 톤을 보여줘.';
+    const moonRole = '달궁은 감정 반응, 안정감을 느끼는 방식, 내면의 습관적 패턴을 보여줘.';
+    const ascRole = '상승궁은 첫인상, 외부 세계에 반응하는 태도, 삶의 입구 같은 에너지를 나타내.';
+
+    const birthDateEl = document.getElementById('birthDate');
+    const birthTimeEl = document.getElementById('birthTime');
+    const birthCityEl = document.getElementById('birthCity');
+    const timezoneOffsetEl = document.getElementById('timezoneOffset');
+    const selectedLocationEl = document.getElementById('selectedLocation');
+    const cityResultsEl = document.getElementById('cityResults');
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+    const chartMetaEl = document.getElementById('chartMeta');
+    const summaryGridEl = document.getElementById('summaryGrid');
+    const interpretationBlocksEl = document.getElementById('interpretationBlocks');
+    const houseListEl = document.getElementById('houseList');
+    const canvas = document.getElementById('chartCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let selectedPlace = { name: 'Seoul, South Korea', lat: 37.5665, lon: 126.9780 };
+    let searchTimer = null;
+
+    timezoneOffsetEl.value = String(-(new Date().getTimezoneOffset() / 60));
+
+    function normalize360(value) {
+      let v = value % 360;
+      if (v < 0) v += 360;
+      return v;
+    }
+
+    function degToRad(deg) { return deg * Math.PI / 180; }
+    function radToDeg(rad) { return rad * 180 / Math.PI; }
+
+    function getSignFromDegree(deg) {
+      return SIGNS[Math.floor(normalize360(deg) / 30)];
+    }
+
+    function formatDegree(deg) {
+      const norm = normalize360(deg);
+      const signIndex = Math.floor(norm / 30);
+      const inSign = norm - signIndex * 30;
+      const degree = Math.floor(inSign);
+      const minutes = Math.floor((inSign - degree) * 60);
+      return `${SIGNS[signIndex].ko} ${degree}° ${String(minutes).padStart(2, '0')}′`;
+    }
+
+    function getJulianDay(dateUTC) {
+      return dateUTC.getTime() / 86400000 + 2440587.5;
+    }
+
+    function getDaysSinceJ2000(dateUTC) {
+      return getJulianDay(dateUTC) - 2451545.0;
+    }
+
+    function getSunLongitude(dateUTC) {
+      const d = getDaysSinceJ2000(dateUTC);
+      const g = normalize360(357.529 + 0.98560028 * d);
+      const q = normalize360(280.459 + 0.98564736 * d);
+      const L = q + 1.915 * Math.sin(degToRad(g)) + 0.020 * Math.sin(degToRad(2 * g));
+      return normalize360(L);
+    }
+
+    function getMoonLongitude(dateUTC) {
+      const d = getDaysSinceJ2000(dateUTC);
+      const L0 = normalize360(218.316 + 13.176396 * d);
+      const M_moon = normalize360(134.963 + 13.064993 * d);
+      const M_sun = normalize360(357.529 + 0.98560028 * d);
+      const D = normalize360(297.850 + 12.190749 * d);
+      const F = normalize360(93.272 + 13.229350 * d);
+      const lon = L0
+        + 6.289 * Math.sin(degToRad(M_moon))
+        + 1.274 * Math.sin(degToRad(2 * D - M_moon))
+        + 0.658 * Math.sin(degToRad(2 * D))
+        + 0.214 * Math.sin(degToRad(2 * M_moon))
+        - 0.186 * Math.sin(degToRad(M_sun))
+        - 0.059 * Math.sin(degToRad(2 * D - 2 * M_moon))
+        - 0.057 * Math.sin(degToRad(2 * D - M_sun - M_moon))
+        + 0.053 * Math.sin(degToRad(2 * D + M_moon))
+        + 0.046 * Math.sin(degToRad(2 * D - M_sun))
+        + 0.041 * Math.sin(degToRad(M_sun - M_moon))
+        - 0.035 * Math.sin(degToRad(D))
+        - 0.031 * Math.sin(degToRad(M_sun + M_moon))
+        - 0.015 * Math.sin(degToRad(2 * F - 2 * D))
+        + 0.011 * Math.sin(degToRad(M_moon - 4 * D));
+      return normalize360(lon);
+    }
+
+    function getMeanObliquity(dateUTC) {
+      const T = (getJulianDay(dateUTC) - 2451545.0) / 36525;
+      return 23.439291 - 0.0130042 * T;
+    }
+
+    function getGreenwichSiderealTime(dateUTC) {
+      const jd = getJulianDay(dateUTC);
+      const T = (jd - 2451545.0) / 36525;
+      const gst = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T - T * T * T / 38710000;
+      return normalize360(gst);
+    }
+
+    function getLocalSiderealTime(dateUTC, lon) {
+      return normalize360(getGreenwichSiderealTime(dateUTC) + lon);
+    }
+
+    function getAscendant(dateUTC, lat, lon) {
+      const epsilon = degToRad(getMeanObliquity(dateUTC));
+      const theta = degToRad(getLocalSiderealTime(dateUTC, lon));
+      const phi = degToRad(lat);
+      const asc = Math.atan2(
+        -Math.cos(theta),
+        Math.sin(theta) * Math.cos(epsilon) + Math.tan(phi) * Math.sin(epsilon)
+      );
+      return normalize360(radToDeg(asc));
+    }
+
+    function getEqualHouseCusps(asc) {
+      return Array.from({ length: 12 }, (_, i) => normalize360(asc + i * 30));
+    }
+
+    function getBodyHouse(bodyDeg, cusps) {
+      const rel = normalize360(bodyDeg - cusps[0]);
+      return Math.floor(rel / 30) + 1;
+    }
+
+    function makeUTCDate(dateStr, timeStr, offsetHours) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const [hh, mm] = timeStr.split(':').map(Number);
+      const utcMillis = Date.UTC(y, m - 1, d, hh - offsetHours, mm, 0);
+      return new Date(utcMillis);
+    }
+
+    function describePlacement(kind, sign, degree, houseNumber) {
+      const base = signInterpretations[sign.key];
+      const houseLine = houseNumber ? `이 배치는 ${houseNumber}하우스 영역과 연결되어 ${houseThemes[houseNumber - 1]} 이슈를 더 강하게 비춰.` : '';
+      const role = kind === 'sun' ? sunRole : kind === 'moon' ? moonRole : ascRole;
+      return `${role} ${sign.ko}(${sign.element} 원소 · ${sign.mode})에 위치해 있어서, ${base} ${houseLine}`;
+    }
+
+    function describeHouse(cuspDeg, index) {
+      const sign = getSignFromDegree(cuspDeg);
+      return `${index + 1}하우스의 문은 ${sign.ko}에 걸쳐 있어. 이 영역에서는 ${houseThemes[index]} 주제를 ${sign.ko}답게 풀어가는 경향이 커.`;
+    }
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle('error', isError);
+    }
+
+    function drawChart(data) {
+      const { sunDeg, moonDeg, ascDeg, houses } = data;
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const outer = 360;
+      const zodiacInner = 280;
+      const houseInner = 180;
+      const core = 70;
+      const rotation = ascDeg;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const bg = ctx.createRadialGradient(cx, cy, 30, cx, cy, outer);
+      bg.addColorStop(0, 'rgba(124,134,255,0.10)');
+      bg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      [outer, zodiacInner, houseInner, core].forEach((r, idx) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = idx === 0 ? 'rgba(214,180,135,0.55)' : 'rgba(255,255,255,0.14)';
+        ctx.lineWidth = idx === 0 ? 2.2 : 1.2;
+        ctx.stroke();
+      });
+
+      for (let i = 0; i < 12; i++) {
+        const startDeg = i * 30 - rotation;
+        const angle = degToRad(startDeg - 90);
+        const x1 = cx + Math.cos(angle) * zodiacInner;
+        const y1 = cy + Math.sin(angle) * zodiacInner;
+        const x2 = cx + Math.cos(angle) * outer;
+        const y2 = cy + Math.sin(angle) * outer;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        const centerDeg = i * 30 + 15 - rotation;
+        const textA = degToRad(centerDeg - 90);
+        const tx = cx + Math.cos(textA) * 320;
+        const ty = cy + Math.sin(textA) * 320;
+        const sign = SIGNS[i];
+        ctx.fillStyle = '#eef2ff';
+        ctx.font = '30px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(sign.symbol, tx, ty - 12);
+        ctx.fillStyle = 'rgba(255,255,255,0.66)';
+        ctx.font = '12px Pretendard, sans-serif';
+        ctx.fillText(sign.ko, tx, ty + 16);
+      }
+
+      houses.forEach((cusp, index) => {
+        const angle = degToRad(cusp - rotation - 90);
+        const x1 = cx + Math.cos(angle) * core;
+        const y1 = cy + Math.sin(angle) * core;
+        const x2 = cx + Math.cos(angle) * zodiacInner;
+        const y2 = cy + Math.sin(angle) * zodiacInner;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = index === 0 ? 'rgba(124,134,255,0.95)' : 'rgba(214,180,135,0.4)';
+        ctx.lineWidth = index === 0 ? 2.5 : 1.1;
+        ctx.stroke();
+
+        const mid = normalize360(cusp + 15 - rotation);
+        const ta = degToRad(mid - 90);
+        ctx.fillStyle = 'rgba(255,255,255,.72)';
+        ctx.font = '13px Pretendard, sans-serif';
+        ctx.fillText(String(index + 1), cx + Math.cos(ta) * 225, cy + Math.sin(ta) * 225);
+      });
+
+      drawBodyMarker('☀', sunDeg, rotation, '#ffd166');
+      drawBodyMarker('☽', moonDeg, rotation, '#b9d6ff');
+      drawBodyMarker('ASC', ascDeg, rotation, '#7c86ff', 18, 240);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 38, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,.04)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.10)';
+      ctx.stroke();
+      ctx.fillStyle = '#d6b487';
+      ctx.font = 'bold 18px Pretendard, sans-serif';
+      ctx.fillText('NATAL', cx, cy - 8);
+      ctx.fillStyle = 'rgba(255,255,255,.68)';
+      ctx.font = '12px Pretendard, sans-serif';
+      ctx.fillText('CHART', cx, cy + 12);
+
+      function drawBodyMarker(label, absoluteDeg, rotationDeg, color, fontSize = 28, radius = 145) {
+        const relative = normalize360(absoluteDeg - rotationDeg);
+        const angle = degToRad(relative - 90);
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius;
+        ctx.beginPath();
+        ctx.arc(x, y, 21, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(10,14,24,.92)';
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.font = `bold ${fontSize}px serif`;
+        ctx.fillText(label, x, y + (label === 'ASC' ? 1 : 0));
+      }
+    }
+
+    function renderOutput(data) {
+      const { localDateLabel, cityName, lat, lon, timezoneOffset, sunDeg, moonDeg, ascDeg, houses } = data;
+      const sunSign = getSignFromDegree(sunDeg);
+      const moonSign = getSignFromDegree(moonDeg);
+      const ascSign = getSignFromDegree(ascDeg);
+      const sunHouse = getBodyHouse(sunDeg, houses);
+      const moonHouse = getBodyHouse(moonDeg, houses);
+
+      chartMetaEl.innerHTML = [
+        `입력 시각: ${localDateLabel}`,
+        `출생지: ${cityName}`,
+        `좌표: ${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+        `UTC 오프셋: ${timezoneOffset >= 0 ? '+' : ''}${timezoneOffset}`
+      ].map(text => `<div class="pill">${text}</div>`).join('');
+
+      summaryGridEl.innerHTML = [
+        { key: 'Sun Sign', value: `${sunSign.symbol} ${sunSign.ko}`, sub: formatDegree(sunDeg), desc: `자아의 중심 · ${sunHouse}하우스 강조` },
+        { key: 'Moon Sign', value: `${moonSign.symbol} ${moonSign.ko}`, sub: formatDegree(moonDeg), desc: `감정의 습관 · ${moonHouse}하우스 강조` },
+        { key: 'Ascendant', value: `${ascSign.symbol} ${ascSign.ko}`, sub: formatDegree(ascDeg), desc: '첫인상 · 삶의 입구' }
+      ].map(item => `
+        <div class="mini">
+          <div class="k">${item.key}</div>
+          <div class="v">${item.value}</div>
+          <div class="d">${item.sub}<br>${item.desc}</div>
+        </div>
+      `).join('');
+
+      interpretationBlocksEl.innerHTML = [
+        { title: `태양궁: ${sunSign.ko}`, text: describePlacement('sun', sunSign, sunDeg, sunHouse) },
+        { title: `달궁: ${moonSign.ko}`, text: describePlacement('moon', moonSign, moonDeg, moonHouse) },
+        { title: `상승궁: ${ascSign.ko}`, text: describePlacement('asc', ascSign, ascDeg) }
+      ].map(item => `
+        <div class="interpret-block">
+          <h4>${item.title}</h4>
+          <p>${item.text}</p>
+        </div>
+      `).join('');
+
+      houseListEl.innerHTML = houses.map((deg, idx) => {
+        const sign = getSignFromDegree(deg);
+        return `
+          <div class="house-item">
+            <strong>${idx + 1}하우스 · ${sign.symbol} ${sign.ko}</strong>
+            <span>${formatDegree(deg)}</span>
+            <span>${describeHouse(deg, idx)}</span>
+          </div>
+        `;
+      }).join('');
+
+      drawChart(data);
+      resultsEl.style.display = 'grid';
+      resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function searchCities(query) {
+      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`;
+      const response = await fetch(url, {
+        headers: { 'Accept-Language': 'ko,en;q=0.8' }
+      });
+      if (!response.ok) throw new Error('도시 검색에 실패했어.');
+      return response.json();
+    }
+
+    birthCityEl.addEventListener('input', () => {
+      const query = birthCityEl.value.trim();
+      cityResultsEl.innerHTML = '';
+      cityResultsEl.style.display = 'none';
+      if (searchTimer) clearTimeout(searchTimer);
+      if (query.length < 2) return;
+
+      searchTimer = setTimeout(async () => {
+        try {
+          const items = await searchCities(query);
+          if (!items.length) return;
+          cityResultsEl.innerHTML = items.map(item => `
+            <div class="city-item" data-name="${escapeHtml(item.display_name)}" data-lat="${item.lat}" data-lon="${item.lon}">
+              ${escapeHtml(item.display_name)}
+            </div>
+          `).join('');
+          cityResultsEl.style.display = 'block';
+        } catch (error) {
+          setStatus(error.message, true);
+        }
+      }, 300);
+    });
+
+    cityResultsEl.addEventListener('click', (e) => {
+      const item = e.target.closest('.city-item');
+      if (!item) return;
+      selectedPlace = {
+        name: item.dataset.name,
+        lat: Number(item.dataset.lat),
+        lon: Number(item.dataset.lon)
+      };
+      birthCityEl.value = item.dataset.name;
+      selectedLocationEl.value = `${selectedPlace.name} · lat ${selectedPlace.lat.toFixed(4)}, lon ${selectedPlace.lon.toFixed(4)}`;
+      cityResultsEl.style.display = 'none';
+      setStatus('출생 도시를 선택했어. 이제 차트를 생성하면 돼.');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.field.wide')) cityResultsEl.style.display = 'none';
+    });
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
+    document.getElementById('fillSampleBtn').addEventListener('click', () => {
+      birthDateEl.value = '1998-08-15';
+      birthTimeEl.value = '14:30';
+      birthCityEl.value = 'Seoul, South Korea';
+      timezoneOffsetEl.value = '9';
+      selectedPlace = { name: 'Seoul, South Korea', lat: 37.5665, lon: 126.9780 };
+      selectedLocationEl.value = `${selectedPlace.name} · lat 37.5665, lon 126.9780`;
+      setStatus('예시 값을 채워뒀어.');
+    });
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      try {
+        const dateStr = birthDateEl.value;
+        const timeStr = birthTimeEl.value;
+        const cityName = birthCityEl.value.trim();
+        const timezoneOffset = Number(timezoneOffsetEl.value);
+
+        if (!dateStr) throw new Error('생년월일을 입력해줘.');
+        if (!timeStr) throw new Error('출생 시간을 입력해줘.');
+        if (!cityName) throw new Error('출생 도시를 입력하고 목록에서 선택해줘.');
+        if (Number.isNaN(timezoneOffset)) throw new Error('UTC 오프셋을 숫자로 입력해줘. 예: 한국은 9');
+
+        const utcDate = makeUTCDate(dateStr, timeStr, timezoneOffset);
+        const sunDeg = getSunLongitude(utcDate);
+        const moonDeg = getMoonLongitude(utcDate);
+        const ascDeg = getAscendant(utcDate, selectedPlace.lat, selectedPlace.lon);
+        const houses = getEqualHouseCusps(ascDeg);
+
+        const data = {
+          localDateLabel: `${dateStr} ${timeStr}`,
+          cityName: selectedPlace.name,
+          lat: selectedPlace.lat,
+          lon: selectedPlace.lon,
+          timezoneOffset,
+          sunDeg,
+          moonDeg,
+          ascDeg,
+          houses
+        };
+
+        renderOutput(data);
+        setStatus('차트를 생성했어. 아래에서 결과와 해석을 확인해봐.');
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+    });
+
+    selectedLocationEl.value = `${selectedPlace.name} · lat 37.5665, lon 126.9780`;
+    setStatus('출생 도시를 선택하고 차트를 생성해봐.');
+  </script>
+</body>
+</html>
