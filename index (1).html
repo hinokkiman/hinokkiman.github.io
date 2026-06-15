@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASTRA — 별이 말하는 오늘</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #07091a;
+      --navy2:  #0d1030;
+      --navy3:  #141840;
+      --gold:   #c9a84c;
+      --gold2:  #e8cc7a;
+      --gold3:  #f5e4a8;
+      --white:  #f0eeea;
+      --muted:  #7a7fa8;
+      --serif:  'Cormorant Garamond', serif;
+      --sans:   'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: var(--sans);
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Canvas ── */
+    #starfield {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ── */
+    main { position: relative; z-index: 1; }
+
+    /* ── NAV ── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.5rem 4rem;
+      border-bottom: 1px solid rgba(201,168,76,.12);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(7,9,26,.7);
+    }
+    .logo {
+      font-family: var(--serif);
+      font-size: 1.6rem; letter-spacing: .18em;
+      color: var(--gold2);
+      text-transform: uppercase;
+    }
+    .nav-links { display: flex; gap: 2.4rem; list-style: none; }
+    .nav-links a {
+      font-size: .8rem; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--muted);
+      text-decoration: none; transition: color .25s;
+    }
+    .nav-links a:hover { color: var(--gold2); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 92vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+    }
+    .hero-eyebrow {
+      font-size: .75rem; letter-spacing: .25em;
+      text-transform: uppercase; color: var(--gold);
+      margin-bottom: 1.6rem;
+    }
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(3rem, 8vw, 7rem);
+      font-weight: 300; line-height: 1.08;
+      color: var(--white);
+      margin-bottom: 1.4rem;
+    }
+    .hero h1 em { font-style: italic; color: var(--gold2); }
+    .hero-sub {
+      font-size: 1rem; color: var(--muted);
+      max-width: 480px; line-height: 1.7;
+      margin-bottom: 3.5rem;
+    }
+
+    /* ── FORM ── */
+    .birth-form {
+      display: flex; gap: .8rem; flex-wrap: wrap;
+      justify-content: center; align-items: center;
+    }
+    .birth-form input[type="date"] {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(201,168,76,.3);
+      border-radius: 8px;
+      color: var(--white);
+      font-family: var(--sans); font-size: .9rem;
+      padding: .75rem 1.2rem;
+      outline: none;
+      transition: border-color .25s, box-shadow .25s;
+      color-scheme: dark;
+    }
+    .birth-form input[type="date"]:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,.15);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border: none; border-radius: 8px;
+      color: var(--navy); font-family: var(--sans);
+      font-size: .85rem; font-weight: 500;
+      letter-spacing: .08em;
+      padding: .78rem 2rem; cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* ── RESULT CARD ── */
+    #result {
+      margin: 0 auto 5rem;
+      max-width: 680px; padding: 0 2rem;
+      display: none;
+    }
+    .result-card {
+      background: linear-gradient(135deg, rgba(20,24,64,.9), rgba(13,16,48,.95));
+      border: 1px solid rgba(201,168,76,.22);
+      border-radius: 20px;
+      padding: 2.8rem 3rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 32px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(201,168,76,.1);
+    }
+    .result-sign-name {
+      font-family: var(--serif);
+      font-size: 3.2rem; font-weight: 300;
+      color: var(--gold2); margin-bottom: .3rem;
+    }
+    .result-sign-sub {
+      font-size: .75rem; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 2rem;
+    }
+    .fortune-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; margin-top: 1.4rem;
+    }
+    .fortune-item {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 12px; padding: 1.1rem 1.3rem;
+    }
+    .fortune-label {
+      font-size: .68rem; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--gold);
+      margin-bottom: .5rem;
+    }
+    .fortune-stars { font-size: 1rem; margin-bottom: .5rem; }
+    .fortune-text { font-size: .82rem; color: rgba(240,238,234,.75); line-height: 1.6; }
+
+    /* ── DIVIDER ── */
+    .section-divider {
+      text-align: center; padding: 5rem 2rem 2.5rem;
+    }
+    .section-divider h2 {
+      font-family: var(--serif); font-size: clamp(2rem,4vw,3.2rem);
+      font-weight: 300; color: var(--white);
+    }
+    .section-divider p {
+      font-size: .85rem; color: var(--muted);
+      margin-top: .8rem; letter-spacing: .04em;
+    }
+    .gold-line {
+      width: 48px; height: 1px;
+      background: var(--gold); margin: 1.4rem auto 0;
+    }
+
+    /* ── ZODIAC GRID ── */
+    #zodiac { padding: 0 4rem 8rem; }
+    .zodiac-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.4rem; max-width: 1200px; margin: 3rem auto 0;
+    }
+    .zodiac-card {
+      background: rgba(13,16,48,.7);
+      border: 1px solid rgba(201,168,76,.12);
+      border-radius: 16px; padding: 1.8rem 1.6rem;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: transform .25s, border-color .25s, box-shadow .25s;
+    }
+    .zodiac-card::before {
+      content: '';
+      position: absolute; inset: 0; border-radius: 16px;
+      background: radial-gradient(circle at 50% 0%, rgba(201,168,76,.08), transparent 70%);
+      opacity: 0; transition: opacity .3s;
+    }
+    .zodiac-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(201,168,76,.5);
+      box-shadow: 0 0 28px rgba(201,168,76,.12), 0 16px 48px rgba(0,0,0,.4);
+    }
+    .zodiac-card:hover::before { opacity: 1; }
+    .card-symbol {
+      font-size: 2.4rem; margin-bottom: .8rem;
+      display: block;
+    }
+    .card-name {
+      font-family: var(--serif); font-size: 1.35rem;
+      font-weight: 400; color: var(--gold2);
+      margin-bottom: .2rem;
+    }
+    .card-date {
+      font-size: .72rem; color: var(--muted);
+      letter-spacing: .08em; margin-bottom: .9rem;
+    }
+    .card-keyword {
+      font-size: .78rem; color: rgba(240,238,234,.6);
+      line-height: 1.5;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(4,5,18,.82);
+      backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: linear-gradient(160deg, var(--navy3), var(--navy2));
+      border: 1px solid rgba(201,168,76,.25);
+      border-radius: 24px; max-width: 560px; width: 100%;
+      padding: 3rem 3.2rem;
+      box-shadow: 0 48px 120px rgba(0,0,0,.6), inset 0 1px 0 rgba(201,168,76,.12);
+      position: relative; animation: modalIn .3s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(20px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-close {
+      position: absolute; top: 1.4rem; right: 1.6rem;
+      background: none; border: none; color: var(--muted);
+      font-size: 1.5rem; cursor: pointer; line-height: 1;
+      transition: color .2s;
+    }
+    .modal-close:hover { color: var(--gold2); }
+    .modal-symbol { font-size: 3.5rem; margin-bottom: 1rem; }
+    .modal-title {
+      font-family: var(--serif); font-size: 2.4rem;
+      font-weight: 300; color: var(--gold2); margin-bottom: .3rem;
+    }
+    .modal-sub {
+      font-size: .72rem; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 1.6rem;
+    }
+    .modal-desc {
+      font-size: .9rem; line-height: 1.8;
+      color: rgba(240,238,234,.8); margin-bottom: 1.6rem;
+    }
+    .modal-tags { display: flex; gap: .6rem; flex-wrap: wrap; }
+    .modal-tag {
+      font-size: .7rem; letter-spacing: .1em;
+      text-transform: uppercase;
+      border: 1px solid rgba(201,168,76,.3);
+      color: var(--gold); border-radius: 20px;
+      padding: .3rem .85rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; padding: 3rem 2rem;
+      border-top: 1px solid rgba(255,255,255,.06);
+      font-size: .75rem; color: var(--muted); letter-spacing: .08em;
+    }
+    footer span { color: var(--gold); }
+
+    @media (max-width: 768px) {
+      nav { padding: 1.2rem 1.6rem; }
+      .nav-links { display: none; }
+      #zodiac { padding: 0 1.2rem 5rem; }
+      .result-card { padding: 2rem 1.6rem; }
+      .fortune-grid { grid-template-columns: 1fr; }
+      .modal { padding: 2rem 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<main>
+  <!-- NAV -->
+  <nav>
+    <div class="logo">Astra</div>
+    <ul class="nav-links">
+      <li><a href="#hero">운세 보기</a></li>
+      <li><a href="#zodiac">별자리</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <p class="hero-eyebrow">✦ 오늘 별자리 운세 ✦</p>
+    <h1>별이 전하는<br /><em>오늘의 이야기</em></h1>
+    <p class="hero-sub">생년월일을 입력하면 당신의 별자리와 오늘의 운세를 알려드립니다.</p>
+    <div class="birth-form">
+      <input type="date" id="birthdate" max="2015-12-31" />
+      <button class="btn-primary" onclick="getReading()">운세 확인하기</button>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <div id="result">
+    <div class="result-card">
+      <div class="result-sign-name" id="res-name"></div>
+      <div class="result-sign-sub" id="res-sub"></div>
+      <div class="fortune-grid" id="res-fortune"></div>
+    </div>
+  </div>
+
+  <!-- ZODIAC SECTION -->
+  <div class="section-divider" id="zodiac-heading">
+    <h2>열두 별자리</h2>
+    <p>당신의 자리를 찾아보세요</p>
+    <div class="gold-line"></div>
+  </div>
+
+  <section id="zodiac">
+    <div class="zodiac-grid" id="zodiac-grid"></div>
+  </section>
+</main>
+
+<footer>
+  <p>✦ <span>ASTRA</span> — 별빛은 항상 당신 곁에 ✦</p>
+  <p style="margin-top:.5rem">운세는 참고용입니다. 모든 결정은 스스로의 의지로.</p>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-symbol" id="m-symbol"></div>
+    <div class="modal-title" id="m-title"></div>
+    <div class="modal-sub" id="m-sub"></div>
+    <p class="modal-desc" id="m-desc"></p>
+    <div class="modal-tags" id="m-tags"></div>
+  </div>
+</div>
+
+<script>
+// ─── STARFIELD ───────────────────────────────────────────
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let W, H, stars = [];
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 240; i++) {
+    stars.push({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.4 + .2,
+      alpha: Math.random() * .7 + .15,
+      speed: Math.random() * .25 + .05,
+      twinkle: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, W, H);
+  stars.forEach(s => {
+    s.twinkle += s.speed * .018;
+    const a = s.alpha * (.7 + .3 * Math.sin(s.twinkle));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(240,235,210,${a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+
+window.addEventListener('resize', () => { resize(); initStars(); });
+resize(); initStars(); requestAnimationFrame(drawStars);
+
+// ─── DATA ────────────────────────────────────────────────
+const SIGNS = [
+  { name:'양자리', en:'Aries',       sym:'♈', date:'3/21 – 4/19',   element:'불', planet:'화성',
+    desc:'용감하고 열정적인 선구자. 도전을 두려워하지 않으며, 새로운 시작에서 가장 빛납니다. 때로는 성급하지만, 그 에너지가 주변에 활력을 불어넣습니다.',
+    tags:['리더십','열정','용기','직관'] },
+  { name:'황소자리', en:'Taurus',    sym:'♉', date:'4/20 – 5/20',   element:'흙', planet:'금성',
+    desc:'인내와 감각의 별자리. 아름다움과 안정을 사랑하며, 한번 마음먹은 것은 끝까지 밀어붙이는 뚝심이 있습니다. 물질적 풍요와 감각적 쾌락을 즐깁니다.',
+    tags:['안정','인내','감각','충성'] },
+  { name:'쌍둥이자리', en:'Gemini',  sym:'♊', date:'5/21 – 6/20',   element:'바람', planet:'수성',
+    desc:'변화무쌍하고 영민한 커뮤니케이터. 호기심이 많고 적응력이 탁월하며, 어떤 주제에도 금세 파고들어 대화를 이끌어갑니다. 이중성이 오히려 매력입니다.',
+    tags:['소통','호기심','유연','재치'] },
+  { name:'게자리', en:'Cancer',      sym:'♋', date:'6/21 – 7/22',   element:'물', planet:'달',
+    desc:'깊은 감수성과 모성적 따뜻함을 지닌 별자리. 직관이 뛰어나고 감정에 솔직합니다. 가족과 고향에 대한 애착이 강하며, 소중한 사람을 지극히 아낍니다.',
+    tags:['감수성','직관','보호','가정'] },
+  { name:'사자자리', en:'Leo',       sym:'♌', date:'7/23 – 8/22',   element:'불', planet:'태양',
+    desc:'무대의 중심을 사랑하는 왕의 별자리. 카리스마와 창의력이 넘치며, 진심 어린 관대함으로 주변을 빛나게 합니다. 인정받을 때 가장 찬란히 빛납니다.',
+    tags:['카리스마','창의','관대','자부심'] },
+  { name:'처녀자리', en:'Virgo',     sym:'♍', date:'8/23 – 9/22',   element:'흙', planet:'수성',
+    desc:'분석적이고 섬세한 완벽주의자. 디테일에 강하고 실용적인 시각으로 문제를 해결합니다. 겉으로는 까다로워 보여도, 내면은 따뜻하고 헌신적입니다.',
+    tags:['분석','섬세','실용','헌신'] },
+  { name:'천칭자리', en:'Libra',     sym:'♎', date:'9/23 – 10/22',  element:'바람', planet:'금성',
+    desc:'균형과 조화를 추구하는 외교관. 아름다운 것과 공정함을 사랑하며, 갈등을 우아하게 중재하는 능력이 있습니다. 관계 속에서 자신을 완성해갑니다.',
+    tags:['균형','조화','공정','우아'] },
+  { name:'전갈자리', en:'Scorpio',   sym:'♏', date:'10/23 – 11/21', element:'물', planet:'명왕성',
+    desc:'심오하고 강렬한 변환의 별자리. 감추어진 진실을 꿰뚫는 통찰력과 불굴의 의지를 지녔습니다. 한번 빠지면 헤어나올 수 없는 신비로운 매력이 있습니다.',
+    tags:['통찰','변환','강렬','신비'] },
+  { name:'사수자리', en:'Sagittarius',sym:'♐',date:'11/22 – 12/21', element:'불', planet:'목성',
+    desc:'자유와 진리를 향해 달리는 철학자. 모험을 즐기고 낙관적인 에너지로 세상을 탐험합니다. 유머와 솔직함으로 어디서든 환영받는 존재입니다.',
+    tags:['자유','모험','낙관','철학'] },
+  { name:'염소자리', en:'Capricorn', sym:'♑', date:'12/22 – 1/19',  element:'흙', planet:'토성',
+    desc:'목표를 향해 묵묵히 오르는 산악인. 책임감과 자기 절제력이 탁월하며, 시간이 지날수록 더욱 빛나는 별자리입니다. 성실함이 결국 정상에 데려다줍니다.',
+    tags:['목표','인내','성실','책임'] },
+  { name:'물병자리', en:'Aquarius',  sym:'♒', date:'1/20 – 2/18',   element:'바람', planet:'천왕성',
+    desc:'미래를 꿈꾸는 혁신가. 독립적이고 독창적인 사고로 시대를 앞서 나갑니다. 인류애가 넘쳐흐르며, 개인보다는 공동체의 진보를 위해 움직입니다.',
+    tags:['혁신','독립','인류애','독창'] },
+  { name:'물고기자리', en:'Pisces',  sym:'♓', date:'2/19 – 3/20',   element:'물', planet:'해왕성',
+    desc:'꿈과 현실의 경계를 자유로이 오가는 예술가. 깊은 공감 능력과 무한한 상상력을 지녔습니다. 부드럽지만 그 울림은 누구보다 깊게 마음에 닿습니다.',
+    tags:['공감','상상','예술','영성'] },
+];
+
+const FORTUNES = {
+  연애: [
+    '오늘은 솔직한 마음을 표현하기 좋은 날입니다. 작은 용기가 큰 변화를 만들어냅니다.',
+    '기다리던 연락이 올 수도 있어요. 마음의 문을 열어두세요.',
+    '오래된 인연을 돌아볼 때입니다. 추억이 새로운 출발점이 될 수 있습니다.',
+    '자신을 더 사랑하는 하루를 보내보세요. 넘치는 사랑이 먼저입니다.',
+    '감정을 숨기지 말고 표현해보세요. 상대는 당신의 진심을 기다리고 있습니다.',
+  ],
+  금전: [
+    '큰 지출은 잠시 미루는 것이 좋겠습니다. 내일의 나를 위한 선택을 하세요.',
+    '예상치 못한 소소한 수입이 생길 수 있습니다. 기분 좋은 하루가 될 것입니다.',
+    '장기적인 재정 계획을 세우기 좋은 날입니다. 작은 저축도 미래를 바꿉니다.',
+    '충동 구매는 금물. 진짜 필요한 것과 원하는 것을 구분해보세요.',
+    '투자보다는 안정에 집중할 시기입니다. 지금의 것을 지키는 것이 현명합니다.',
+  ],
+  건강: [
+    '충분한 수면이 오늘의 키워드입니다. 일찍 자리에 드세요.',
+    '가벼운 스트레칭이나 산책이 몸과 마음을 리셋해줄 것입니다.',
+    '수분 섭취에 신경 쓰세요. 물 한 잔이 오늘의 보약입니다.',
+    '무리한 계획보다 여유로운 하루가 더 많은 것을 돌려줄 것입니다.',
+    '마음의 피로를 먼저 살피세요. 내면이 건강해야 몸도 빛납니다.',
+  ],
+  총운: [
+    '오늘은 직감을 믿어보세요. 첫 번째 선택이 정답일 가능성이 높습니다.',
+    '주변 사람들의 이야기에 귀 기울이면 뜻밖의 힌트를 얻게 됩니다.',
+    '작은 일에도 최선을 다하는 하루. 그 성실함이 반드시 빛을 발합니다.',
+    '새로운 도전을 두려워하지 마세요. 별들이 당신의 편입니다.',
+    '오늘은 혼자보다 함께할 때 더 큰 에너지가 흐릅니다. 협력을 택하세요.',
+  ],
+};
+
+function stars2(n) { return '★'.repeat(n) + '☆'.repeat(5-n); }
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function getSign(month, day) {
+  const md = month * 100 + day;
+  if (md >= 321 && md <= 419) return 0;
+  if (md >= 420 && md <= 520) return 1;
+  if (md >= 521 && md <= 620) return 2;
+  if (md >= 621 && md <= 722) return 3;
+  if (md >= 723 && md <= 822) return 4;
+  if (md >= 823 && md <= 922) return 5;
+  if (md >= 923 && md <= 1022) return 6;
+  if (md >= 1023 && md <= 1121) return 7;
+  if (md >= 1122 && md <= 1221) return 8;
+  if (md >= 1222 || md <= 119) return 9;
+  if (md >= 120 && md <= 218) return 10;
+  return 11;
+}
+
+function getReading() {
+  const val = document.getElementById('birthdate').value;
+  if (!val) { alert('생년월일을 입력해주세요.'); return; }
+  const d = new Date(val);
+  const m = d.getMonth() + 1, day = d.getDate();
+  const idx = getSign(m, day);
+  const sign = SIGNS[idx];
+
+  document.getElementById('res-name').textContent = sign.sym + ' ' + sign.name;
+  document.getElementById('res-sub').textContent = sign.en.toUpperCase() + '  ·  ' + sign.date + '  ·  ' + sign.element + '의 별자리';
+
+  const cats = ['연애','금전','건강','총운'];
+  const el = document.getElementById('res-fortune');
+  el.innerHTML = '';
+  cats.forEach(cat => {
+    const score = Math.floor(Math.random() * 2) + 3;
+    el.innerHTML += `
+      <div class="fortune-item">
+        <div class="fortune-label">${cat}</div>
+        <div class="fortune-stars">${stars2(score)}</div>
+        <div class="fortune-text">${pick(FORTUNES[cat])}</div>
+      </div>`;
+  });
+
+  const res = document.getElementById('result');
+  res.style.display = 'block';
+  setTimeout(() => res.scrollIntoView({ behavior:'smooth', block:'center' }), 50);
+}
+
+// ─── ZODIAC GRID ─────────────────────────────────────────
+const grid = document.getElementById('zodiac-grid');
+SIGNS.forEach((s, i) => {
+  const card = document.createElement('div');
+  card.className = 'zodiac-card';
+  card.innerHTML = `
+    <span class="card-symbol">${s.sym}</span>
+    <div class="card-name">${s.name}</div>
+    <div class="card-date">${s.date}</div>
+    <div class="card-keyword">${s.element} · ${s.planet}</div>`;
+  card.onclick = () => openModal(i);
+  grid.appendChild(card);
+});
+
+// ─── MODAL ───────────────────────────────────────────────
+function openModal(i) {
+  const s = SIGNS[i];
+  document.getElementById('m-symbol').textContent = s.sym;
+  document.getElementById('m-title').textContent = s.name;
+  document.getElementById('m-sub').textContent = s.en.toUpperCase() + '  ·  ' + s.date + '  ·  ' + s.element + ' / ' + s.planet;
+  document.getElementById('m-desc').textContent = s.desc;
+  document.getElementById('m-tags').innerHTML = s.tags.map(t => `<span class="modal-tag">${t}</span>`).join('');
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal') || e.currentTarget.classList.contains('modal-close')) {
+    document.getElementById('modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
